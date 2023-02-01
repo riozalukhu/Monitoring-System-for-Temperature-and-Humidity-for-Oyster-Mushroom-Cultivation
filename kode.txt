@@ -1,0 +1,82 @@
+#define USE_NODE_MCU_BOARD
+#define BLYNK_TEMPLATE_ID "TMPLa2T9Nlus"
+#define BLYNK_DEVICE_NAME "LED"
+#define BLYNK_FIRMWARE_VERSION        "0.1.0"
+#define BLYNK_PRINT Serial
+#include <LCD_I2C.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+#include "DHT.h"
+#define DHTTYPE DHT11
+#define dht_pin D3
+DHT dht(dht_pin,DHTTYPE);
+int pin = 13;
+#include "BlynkEdgent.h"
+BLYNK_WRITE(V1){
+  int value = param.asInt();
+  digitalWrite(pin,value);
+}
+int pin2 = 12;
+BLYNK_WRITE(V0){
+  int value2 = param.asInt();
+  digitalWrite(pin2,value2);
+}
+int pin3 = 14;  
+BLYNK_WRITE(V2){
+  int value3 = param.asInt();
+  digitalWrite(pin3,value3);
+}
+void setup() {
+  Serial.begin(115200);
+  lcd.begin(16, 2);
+  dht.begin();
+  Wire.begin();
+  pinMode(pin,OUTPUT);
+  pinMode(pin2,OUTPUT);
+  pinMode(pin3,OUTPUT);
+  BlynkEdgent.begin();
+}
+
+void loop() {
+  float s = dht.readTemperature();
+  float h = dht.readHumidity();
+  lcd.backlight();
+  lcd.setCursor(0, 1);
+  lcd.print("Suhu: ");
+  lcd.print(s);
+  
+  lcd.setCursor(0, 0);
+  lcd.print("Kelembaban: ");
+  lcd.print(h);
+  lcd.print("%");
+  Serial.println(s);
+  Serial.println(h);
+  
+  Blynk.virtualWrite(V3, s);
+  Blynk.virtualWrite(V4, h);
+
+  if(s <= 25 ){
+    digitalWrite(13,HIGH);
+    digitalWrite(14,LOW);
+    digitalWrite(12,LOW);
+  }
+  else if(s > 29){
+    digitalWrite(13,LOW);
+    digitalWrite(14,LOW);
+    digitalWrite(12,HIGH);
+  }
+
+  if(h < 60 || h > 90){
+    digitalWrite(13,LOW);
+    digitalWrite(14,HIGH);
+    digitalWrite(12,LOW);
+  }
+  else{
+    digitalWrite(13,LOW);
+    digitalWrite(14,LOW);
+    digitalWrite(12,LOW);
+  }
+  
+  BlynkEdgent.run();
+}
